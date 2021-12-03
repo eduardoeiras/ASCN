@@ -1,0 +1,52 @@
+---
+- name: Update system packages
+  become: yes
+  apt:
+    update_cache: yes
+    upgrade: no
+
+- name: Instar o NodeJS
+  become: yes
+  apt:
+    name: nodejs
+    state: latest
+
+- name: Criar o diretório wiki para a aplicação
+  ansible.builtin.file:
+    path: /var/wiki
+    state: directory
+    mode: '0755'
+
+- name: Extrair o ficheiro tar.gz para o novo diretório
+  ansible.builtin.unarchive:
+    src: https://github.com/Requarks/wiki/releases/download/2.5.219/wiki-js.tar.gz
+    dest: /var/wiki
+    remote_src: yes
+
+- name: Create WikiJS configuration file
+  template: src=config.yml dest=/var/wiki/config.yml
+
+- name: Create WikiJS Service Configuration File
+  template: src=wiki.service dest=/etc/systemd/system/wiki.service
+
+- name: Reload Systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- pause:
+    seconds: 10
+
+- name: Iniciar o serviço Wiki
+  ansible.builtin.systemd:
+    name: wiki
+    state: reloaded
+
+- name: Enable do serviço Wiki
+  ansible.builtin.systemd:
+    name: wiki
+    enabled: yes
+    masked: no
+- name: Start WikiJS
+  shell: nohup php artisan serve --host=0.0.0.0 > app_out.log 2>&1 &
+  args:
+    chdir: ~/swap

@@ -1,0 +1,8 @@
+---
+- name: WikiJS Instalation
+  hosts: all
+  become: yes
+  roles:
+    - app
+  tags: 
+    - appinstall
